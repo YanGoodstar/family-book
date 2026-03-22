@@ -27,22 +27,37 @@ public class DreamGoalRequest {
     private BigDecimal targetAmount;
 
     /**
-     * 截止日期
+     * 目标日期
      */
-    private LocalDate deadline;
+    private LocalDate targetDate;
 
     /**
-     * 储蓄类型：1-固定金额，2-收入百分比
+     * 储蓄类型：1=固定金额, 2=工资百分比
      */
-    private Integer type;
+    private Integer savingsType;
 
     /**
-     * 自动储蓄金额（type=1时使用）
+     * 固定储蓄金额
      */
-    private BigDecimal autoSaveAmount;
+    private BigDecimal savingsAmount;
 
     /**
-     * 自动储蓄百分比（type=2时使用）
+     * 储蓄百分比(如0.3表示30%)
      */
-    private BigDecimal autoSavePercent;
+    private BigDecimal savingsPercent;
+
+    /**
+     * 月收入(百分比模式用)
+     */
+    private BigDecimal monthlyIncome;
+
+    /**
+     * 图标
+     */
+    private String icon;
+
+    /**
+     * 优先级
+     */
+    private Integer priority;
 }

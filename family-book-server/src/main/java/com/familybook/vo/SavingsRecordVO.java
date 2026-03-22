@@ -16,24 +16,29 @@ public class SavingsRecordVO {
     private Long id;
 
     /**
-     * 梦想目标ID
+     * 目标ID
      */
-    private Long dreamGoalId;
+    private Long goalId;
 
     /**
-     * 年份
+     * 记录月份(yyyy-MM)
      */
-    private Integer year;
+    private String recordMonth;
 
     /**
-     * 月份（1-12）
+     * 计划储蓄金额
      */
-    private Integer month;
+    private BigDecimal plannedAmount;
 
     /**
-     * 储蓄金额
+     * 实际储蓄金额
      */
-    private BigDecimal amount;
+    private BigDecimal actualAmount;
+
+    /**
+     * 是否达标:0=否, 1=是
+     */
+    private Integer isCompleted;
 
     /**
      * 创建时间（格式化字符串）

@@ -13,10 +13,10 @@ public interface SavingsRecordService extends IService<SavingsRecord> {
     /**
      * 获取储蓄记录列表
      */
-    List<SavingsRecord> getRecordsByDreamGoalId(Long dreamGoalId);
+    List<SavingsRecord> getRecordsByGoalId(Long goalId);
 
     /**
      * 获取指定月份的储蓄记录
      */
-    SavingsRecord getRecordByMonth(Long dreamGoalId, Integer year, Integer month);
+    SavingsRecord getRecordByMonth(Long goalId, String recordMonth);
 }

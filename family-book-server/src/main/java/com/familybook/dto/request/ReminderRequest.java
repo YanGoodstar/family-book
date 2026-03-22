@@ -14,22 +14,17 @@ public class ReminderRequest {
     private Long id;
 
     /**
-     * 提醒类型：1-每日，2-每周，3-每月
-     */
-    private Integer type;
-
-    /**
      * 提醒时间（格式：HH:mm）
      */
     private String remindTime;
 
     /**
-     * 提醒内容
+     * 提醒类型:1=每天, 2=工作日, 3=周末
      */
-    private String content;
+    private Integer remindType;
 
     /**
-     * 是否启用：0-禁用，1-启用
+     * 是否启用：0=禁用，1=启用
      */
     private Integer isEnabled;
 }

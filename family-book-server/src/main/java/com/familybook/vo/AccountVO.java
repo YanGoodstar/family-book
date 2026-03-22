@@ -29,7 +29,7 @@ public class AccountVO {
     private String icon;
 
     @Schema(description = "排序序号", example = "1")
-    private Integer sortOrder;
+    private Integer sort;
 
     @Schema(description = "创建时间", example = "2024-01-15 10:30:00")
     private String createTime;

@@ -41,19 +41,19 @@ public class TransferVO {
     private BigDecimal amount;
 
     /**
-     * 转账说明
+     * 手续费
      */
-    private String description;
+    private BigDecimal fee;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 转账日期（格式化字符串）
      */
     private String transferDate;
-
-    /**
-     * 转账时间（格式化字符串）
-     */
-    private String transferTime;
 
     /**
      * 创建时间（格式化字符串）

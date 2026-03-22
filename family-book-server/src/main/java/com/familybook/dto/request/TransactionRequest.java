@@ -29,7 +29,7 @@ public class TransactionRequest {
     private Long categoryId;
 
     /**
-     * 类型：1-收入，2-支出
+     * 交易类型：1=支出，2=收入
      */
     private Integer type;
 
@@ -39,9 +39,9 @@ public class TransactionRequest {
     private BigDecimal amount;
 
     /**
-     * 描述/备注
+     * 备注
      */
-    private String description;
+    private String remark;
 
     /**
      * 交易日期

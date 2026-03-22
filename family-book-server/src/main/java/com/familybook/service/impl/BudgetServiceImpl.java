@@ -27,7 +27,7 @@ public class BudgetServiceImpl extends ServiceImpl<BudgetMapper, Budget> impleme
     }
 
     @Override
-    public List<Budget> getBudgets(Long userId, Long familyId, Integer year, Integer month) {
+    public List<Budget> getBudgets(Long userId, Long familyId, String budgetMonth) {
         return null;
     }
 

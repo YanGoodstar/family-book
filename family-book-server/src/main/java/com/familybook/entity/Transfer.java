@@ -6,7 +6,6 @@ import lombok.EqualsAndHashCode;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalTime;
 
 /**
  * 转账记录实体类
@@ -21,11 +20,6 @@ public class Transfer extends BaseEntity {
      * 用户ID
      */
     private Long userId;
-
-    /**
-     * 家庭组ID（可选，家庭内转账时填写）
-     */
-    private Long familyId;
 
     /**
      * 转出账户ID
@@ -43,17 +37,17 @@ public class Transfer extends BaseEntity {
     private BigDecimal amount;
 
     /**
-     * 转账备注
+     * 手续费
      */
-    private String description;
+    private BigDecimal fee;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 转账日期
      */
     private LocalDate transferDate;
-
-    /**
-     * 转账时间
-     */
-    private LocalTime transferTime;
 }

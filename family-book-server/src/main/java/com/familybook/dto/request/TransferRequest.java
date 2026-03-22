@@ -33,17 +33,17 @@ public class TransferRequest {
     private BigDecimal amount;
 
     /**
-     * 转账说明
+     * 手续费
      */
-    private String description;
+    private BigDecimal fee;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 转账日期
      */
     private LocalDate transferDate;
-
-    /**
-     * 转账时间
-     */
-    private LocalTime transferTime;
 }

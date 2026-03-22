@@ -16,22 +16,32 @@ import java.math.BigDecimal;
 public class SavingsRecord extends BaseEntity {
 
     /**
-     * 梦想目标ID
+     * 目标ID
      */
-    private Long dreamGoalId;
+    private Long goalId;
 
     /**
-     * 储蓄年份
+     * 用户ID
      */
-    private Integer year;
+    private Long userId;
 
     /**
-     * 储蓄月份（1-12）
+     * 记录月份(yyyy-MM)
      */
-    private Integer month;
+    private String recordMonth;
 
     /**
-     * 储蓄金额
+     * 计划储蓄金额
      */
-    private BigDecimal amount;
+    private BigDecimal plannedAmount;
+
+    /**
+     * 实际储蓄金额
+     */
+    private BigDecimal actualAmount;
+
+    /**
+     * 是否达标:0=否, 1=是
+     */
+    private Integer isCompleted;
 }

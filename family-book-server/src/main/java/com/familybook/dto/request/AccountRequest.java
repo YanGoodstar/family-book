@@ -34,5 +34,5 @@ public class AccountRequest {
     private String icon;
 
     @Schema(description = "排序序号，数值越小越靠前", example = "1")
-    private Integer sortOrder;
+    private Integer sort;
 }

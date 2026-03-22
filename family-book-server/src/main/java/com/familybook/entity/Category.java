@@ -43,13 +43,7 @@ public class Category extends BaseEntity {
     /**
      * 排序顺序
      */
-    private Integer sortOrder;
-
-    /**
-     * 父分类ID
-     * 用于支持二级分类，顶级分类为0
-     */
-    private Long parentId;
+    private Integer sort;
 
     /**
      * 是否系统预设：0=自定义，1=系统预设

@@ -32,10 +32,5 @@ public class CategoryRequest {
     /**
      * 排序顺序
      */
-    private Integer sortOrder;
-
-    /**
-     * 父分类ID，顶级分类为0
-     */
-    private Long parentId;
+    private Integer sort;
 }

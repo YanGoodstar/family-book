@@ -32,12 +32,7 @@ public class CategoryVO {
     /**
      * 排序顺序
      */
-    private Integer sortOrder;
-
-    /**
-     * 父分类ID，顶级分类为0
-     */
-    private Long parentId;
+    private Integer sort;
 
     /**
      * 是否系统预设：0-否，1-是

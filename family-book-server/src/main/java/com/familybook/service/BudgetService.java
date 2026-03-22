@@ -19,7 +19,7 @@ public interface BudgetService extends IService<Budget> {
     /**
      * 获取预算列表
      */
-    List<Budget> getBudgets(Long userId, Long familyId, Integer year, Integer month);
+    List<Budget> getBudgets(Long userId, Long familyId, String budgetMonth);
 
     /**
      * 获取预算使用情况

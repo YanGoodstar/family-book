@@ -41,12 +41,32 @@ public class Account extends BaseEntity {
     private BigDecimal balance;
 
     /**
+     * 信用额度(信用卡)
+     */
+    private BigDecimal creditLimit;
+
+    /**
+     * 账单日(信用卡)
+     */
+    private Integer billDay;
+
+    /**
+     * 还款日(信用卡)
+     */
+    private Integer repayDay;
+
+    /**
      * 账户图标
      */
     private String icon;
 
     /**
-     * 排序序号
+     * 是否默认账户:0=否, 1=是
      */
-    private Integer sortOrder;
+    private Integer isDefault;
+
+    /**
+     * 排序
+     */
+    private Integer sort;
 }

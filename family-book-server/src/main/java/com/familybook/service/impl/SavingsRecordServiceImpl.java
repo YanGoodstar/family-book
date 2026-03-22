@@ -21,12 +21,12 @@ public class SavingsRecordServiceImpl extends ServiceImpl<SavingsRecordMapper, S
     }
 
     @Override
-    public List<SavingsRecord> getRecordsByDreamGoalId(Long dreamGoalId) {
+    public List<SavingsRecord> getRecordsByGoalId(Long goalId) {
         return null;
     }
 
     @Override
-    public SavingsRecord getRecordByMonth(Long dreamGoalId, Integer year, Integer month) {
+    public SavingsRecord getRecordByMonth(Long goalId, String recordMonth) {
         return null;
     }
 }

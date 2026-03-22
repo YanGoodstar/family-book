@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalTime;
+
 /**
  * 记账提醒实体类
  * 对应数据库表 t_reminder
@@ -19,22 +21,17 @@ public class Reminder extends BaseEntity {
     private Long userId;
 
     /**
-     * 提醒类型：1=每日，2=每周，3=每月
+     * 提醒时间
      */
-    private Integer type;
+    private LocalTime remindTime;
 
     /**
-     * 提醒时间，格式如 "09:00"
+     * 提醒类型:1=每天, 2=工作日, 3=周末
      */
-    private String remindTime;
+    private Integer remindType;
 
     /**
-     * 提醒内容
-     */
-    private String content;
-
-    /**
-     * 是否启用：0=禁用，1=启用
+     * 是否启用:0=否, 1=是
      */
     private Integer isEnabled;
 }

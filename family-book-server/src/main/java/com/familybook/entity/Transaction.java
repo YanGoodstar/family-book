@@ -38,7 +38,7 @@ public class Transaction extends BaseEntity {
     private Long categoryId;
 
     /**
-     * 交易类型：1=收入，2=支出
+     * 交易类型：1=支出，2=收入
      */
     private Integer type;
 
@@ -48,9 +48,9 @@ public class Transaction extends BaseEntity {
     private BigDecimal amount;
 
     /**
-     * 交易描述/备注
+     * 备注
      */
-    private String description;
+    private String remark;
 
     /**
      * 交易日期
@@ -66,4 +66,14 @@ public class Transaction extends BaseEntity {
      * 交易地点
      */
     private String location;
+
+    /**
+     * 图片URL数组(JSON)
+     */
+    private String images;
+
+    /**
+     * 是否同步:0=否, 1=是
+     */
+    private Integer isSync;
 }

@@ -21,19 +21,14 @@ public class BudgetRequest {
     private Long categoryId;
 
     /**
-     * 预算年份
+     * 预算月份(yyyy-MM)
      */
-    private Integer year;
-
-    /**
-     * 预算月份
-     */
-    private Integer month;
+    private String budgetMonth;
 
     /**
      * 预算金额
      */
-    private BigDecimal amount;
+    private BigDecimal budgetAmount;
 
     /**
      * 预警阈值（如0.8表示使用80%时预警）
