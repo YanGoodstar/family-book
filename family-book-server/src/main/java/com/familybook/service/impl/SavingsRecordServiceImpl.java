@@ -1,5 +1,6 @@
 package com.familybook.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.familybook.entity.SavingsRecord;
 import com.familybook.mapper.SavingsRecordMapper;
@@ -22,11 +23,17 @@ public class SavingsRecordServiceImpl extends ServiceImpl<SavingsRecordMapper, S
 
     @Override
     public List<SavingsRecord> getRecordsByGoalId(Long goalId) {
-        return null;
+        LambdaQueryWrapper<SavingsRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SavingsRecord::getGoalId, goalId)
+                .orderByDesc(SavingsRecord::getRecordMonth);
+        return this.list(wrapper);
     }
 
     @Override
     public SavingsRecord getRecordByMonth(Long goalId, String recordMonth) {
-        return null;
+        LambdaQueryWrapper<SavingsRecord> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(SavingsRecord::getGoalId, goalId)
+                .eq(SavingsRecord::getRecordMonth, recordMonth);
+        return this.getOne(wrapper);
     }
 }

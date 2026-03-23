@@ -10,7 +10,12 @@
       "Bash(curl -s http://localhost:8080/swagger-ui.html)",
       "Bash(curl:*)",
       "Bash(jps -l)",
-      "Bash(chcp:*)"
+      "Bash(chcp:*)",
+      "Bash(tee /tmp/login_response.json)",
+      "Read(//c/Program Files/Java/**)",
+      "Read(//c/Program Files \\(x86\\)/**)",
+      "Bash(cd:*)",
+      "Bash(mvn clean:*)"
     ]
   }
 }
