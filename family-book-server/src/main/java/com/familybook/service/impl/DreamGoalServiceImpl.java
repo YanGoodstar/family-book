@@ -99,19 +99,31 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
         dreamGoal.setSavedAmount(newSaved);
         this.updateById(dreamGoal);
 
-        // 创建储蓄记录
-        SavingsRecord record = new SavingsRecord();
-        record.setGoalId(dreamGoalId);
-        record.setUserId(dreamGoal.getUserId());
-        record.setRecordMonth(LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM")));
-        record.setPlannedAmount(calculatePlannedAmount(dreamGoal));
-        record.setActualAmount(amount);
+        // 创建或更新储蓄记录
+        String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
+        SavingsRecord existingRecord = savingsRecordService.getRecordByMonth(dreamGoalId, currentMonth);
 
-        // 判断是否达标
-        boolean isCompleted = amount.compareTo(record.getPlannedAmount()) >= 0;
-        record.setIsCompleted(isCompleted ? 1 : 0);
-
-        savingsRecordService.save(record);
+        if (existingRecord != null) {
+            // 已有记录，累加金额
+            BigDecimal newActualAmount = existingRecord.getActualAmount().add(amount);
+            existingRecord.setActualAmount(newActualAmount);
+            // 重新判断是否达标
+            boolean isCompleted = newActualAmount.compareTo(existingRecord.getPlannedAmount()) >= 0;
+            existingRecord.setIsCompleted(isCompleted ? 1 : 0);
+            savingsRecordService.updateById(existingRecord);
+        } else {
+            // 创建新记录
+            SavingsRecord record = new SavingsRecord();
+            record.setGoalId(dreamGoalId);
+            record.setUserId(dreamGoal.getUserId());
+            record.setRecordMonth(currentMonth);
+            record.setPlannedAmount(calculatePlannedAmount(dreamGoal));
+            record.setActualAmount(amount);
+            // 判断是否达标
+            boolean isCompleted = amount.compareTo(record.getPlannedAmount()) >= 0;
+            record.setIsCompleted(isCompleted ? 1 : 0);
+            savingsRecordService.save(record);
+        }
     }
 
     @Override

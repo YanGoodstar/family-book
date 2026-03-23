@@ -87,7 +87,7 @@ public class BudgetServiceImpl extends ServiceImpl<BudgetMapper, Budget> impleme
         // 查询该用户该月份该分类的支出总额
         LambdaQueryWrapper<Transaction> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Transaction::getUserId, userId)
-                .eq(Transaction::getType, 2) // 2=支出
+                .eq(Transaction::getType, 1) // 1=支出
                 .between(Transaction::getTransactionDate, startDate, endDate);
 
         // 如果有分类限制，则按分类查询

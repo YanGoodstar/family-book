@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Tag(name = "记账管理", description = "记账、查询、统计相关接口")
@@ -129,5 +130,43 @@ public class TransactionController {
         vo.setBalance(income.subtract(expense));
 
         return Result.success(vo);
+    }
+
+    @Operation(summary = "分类统计", description = "按分类统计支出或收入，用于饼图展示")
+    @GetMapping("/statistics/category")
+    public Result<List<CategoryStatisticsVO>> categoryStatistics(
+            @RequestParam Integer type,
+            @RequestParam(required = false) String startDate,
+            @RequestParam(required = false) String endDate) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        List<CategoryStatisticsVO> list = transactionService.getCategoryStatistics(
+                userId,
+                type,
+                startDate != null ? java.time.LocalDate.parse(startDate) : null,
+                endDate != null ? java.time.LocalDate.parse(endDate) : null
+        );
+
+        return Result.success(list);
+    }
+
+    @Operation(summary = "月度趋势", description = "获取近N个月的收支趋势，用于折线图展示")
+    @GetMapping("/statistics/trend")
+    public Result<List<MonthlyTrendVO>> monthlyTrend(
+            @RequestParam(required = false, defaultValue = "6") Integer months) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        List<MonthlyTrendVO> list = transactionService.getMonthlyTrend(userId, months);
+        return Result.success(list);
+    }
+
+    @Operation(summary = "年度统计", description = "获取指定年份的年度统计汇总")
+    @GetMapping("/statistics/yearly")
+    public Result<Map<String, Object>> yearlyStatistics(
+            @RequestParam(required = false) Integer year) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        Map<String, Object> result = transactionService.getYearlyStatistics(userId, year);
+        return Result.success(result);
     }
 }
