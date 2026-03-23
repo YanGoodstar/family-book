@@ -25,7 +25,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/v1/user/login", "/swagger-ui/**", "/v3/api-docs/**", "/doc.html").permitAll()
-                .anyRequest().permitAll()  // todo开发阶段临时放行所有请求后续改为.anyRequest().authenticated()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
