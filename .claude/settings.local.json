@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(mvn test:*)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(mvn test-compile:*)",
+      "Bash(mvn compile:*)",
+      "Bash(mvn spring-boot:run -Dspring-boot.run.profiles=dev)",
+      "Bash(curl -s http://localhost:8080/actuator/health)",
+      "Bash(curl -s http://localhost:8080/swagger-ui.html)",
+      "Bash(curl:*)",
+      "Bash(jps -l)",
+      "Bash(chcp:*)"
     ]
   }
 }

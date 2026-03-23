@@ -9,6 +9,8 @@ public class SecurityUtils {
         if (principal instanceof Long) {
             return (Long) principal;
         }
-        return null;
+        //todo方便测试
+        return 0L;
+//        return null;
     }
 }
