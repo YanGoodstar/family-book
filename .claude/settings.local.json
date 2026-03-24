@@ -15,7 +15,13 @@
       "Read(//c/Program Files/Java/**)",
       "Read(//c/Program Files \\(x86\\)/**)",
       "Bash(cd:*)",
-      "Bash(mvn clean:*)"
+      "Bash(mvn clean:*)",
+      "Bash(find E:/family-book -name *.html -o -name *.vue -o -name *.jsx -o -name *.tsx -o -name *.css -o -name *.scss -o -name *.less)",
+      "Bash(find E:/family-book -type d -name *app* -o -name *client* -o -name *web* -o -name *ui* -o -name *h5*)",
+      "Bash(mysql:*)",
+      "Bash(unzip -q /tmp/echarts-weixin.zip -d /tmp/)",
+      "Read(//tmp/**)",
+      "Bash(cp:*)"
     ]
   }
 }

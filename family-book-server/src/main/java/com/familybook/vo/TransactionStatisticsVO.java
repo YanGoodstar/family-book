@@ -14,12 +14,12 @@ public class TransactionStatisticsVO {
     /**
      * 总收入
      */
-    private BigDecimal income;
+    private BigDecimal totalIncome;
 
     /**
      * 总支出
      */
-    private BigDecimal expense;
+    private BigDecimal totalExpense;
 
     /**
      * 结余（收入 - 支出）

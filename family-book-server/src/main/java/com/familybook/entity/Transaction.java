@@ -1,6 +1,7 @@
 package com.familybook.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -55,11 +56,13 @@ public class Transaction extends BaseEntity {
     /**
      * 交易日期
      */
+    @JsonFormat(pattern = "yyyy-MM-dd")
     private LocalDate transactionDate;
 
     /**
      * 交易时间
      */
+    @JsonFormat(pattern = "HH:mm:ss")
     private LocalTime transactionTime;
 
     /**

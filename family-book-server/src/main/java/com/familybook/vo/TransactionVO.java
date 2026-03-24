@@ -12,9 +12,9 @@ import java.math.BigDecimal;
 public class TransactionVO {
 
     /**
-     * 交易记录ID
+     * 交易记录ID（字符串形式，避免JavaScript精度丢失）
      */
-    private Long id;
+    private String id;
 
     /**
      * 用户ID
@@ -30,6 +30,11 @@ public class TransactionVO {
      * 账户名称
      */
     private String accountName;
+
+    /**
+     * 账户类型
+     */
+    private Integer accountType;
 
     /**
      * 分类ID
