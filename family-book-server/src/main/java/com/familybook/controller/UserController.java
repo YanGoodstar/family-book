@@ -1,10 +1,12 @@
 package com.familybook.controller;
 
 import com.familybook.common.Result;
+import com.familybook.dto.request.BalanceRequest;
 import com.familybook.dto.request.LoginRequest;
 import com.familybook.dto.request.UserUpdateRequest;
 import com.familybook.entity.User;
 import com.familybook.service.UserService;
+import com.familybook.vo.BalanceVO;
 import com.familybook.vo.LoginVO;
 import com.familybook.vo.UserVO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @Tag(name = "用户管理", description = "用户登录、用户信息相关接口")
 @RestController
@@ -39,12 +43,14 @@ public class UserController {
         return Result.success(loginVO);
     }
 
-    @Operation(summary = "获取当前用户信息", description = "获取登录用户的详细信息")
+    @Operation(summary = "获取当前用户信息", description = "获取登录用户的详细信息，未登录返回null")
     @GetMapping("/info")
     public Result<UserVO> getUserInfo() {
         User user = userService.getCurrentUser();
+
+        // 未登录用户返回null，不报错
         if (user == null) {
-            return Result.error("用户未登录");
+            return Result.success(null);
         }
 
         UserVO userVO = new UserVO();
@@ -63,5 +69,48 @@ public class UserController {
         BeanUtils.copyProperties(request, user);
         userService.updateUserInfo(user);
         return Result.success();
+    }
+
+    @Operation(summary = "获取用户余额", description = "获取当前用户的起始金额和当前余额，未登录返回0")
+    @GetMapping("/balance")
+    public Result<BalanceVO> getBalance() {
+        User user = userService.getCurrentUser();
+
+        BalanceVO vo = new BalanceVO();
+
+        if (user == null) {
+            // 未登录用户，余额默认为0
+            vo.setInitialBalance(BigDecimal.ZERO);
+            vo.setCurrentBalance(BigDecimal.ZERO);
+            return Result.success(vo);
+        }
+
+        // 计算当前余额
+        BigDecimal currentBalance = userService.calculateBalance(user.getId());
+
+        vo.setInitialBalance(user.getInitialBalance() != null ? user.getInitialBalance() : BigDecimal.ZERO);
+        vo.setCurrentBalance(currentBalance);
+
+        return Result.success(vo);
+    }
+
+    @Operation(summary = "设置起始金额", description = "设置用户的起始金额，会重新计算当前余额")
+    @PostMapping("/balance")
+    public Result<BalanceVO> setBalance(@RequestBody BalanceRequest request) {
+        User user = userService.getCurrentUser();
+        if (user == null) {
+            return Result.error("用户未登录");
+        }
+
+        userService.setInitialBalance(user.getId(), request.getInitialBalance());
+
+        // 重新计算余额
+        BigDecimal currentBalance = userService.calculateBalance(user.getId());
+
+        BalanceVO vo = new BalanceVO();
+        vo.setInitialBalance(request.getInitialBalance());
+        vo.setCurrentBalance(currentBalance);
+
+        return Result.success(vo);
     }
 }

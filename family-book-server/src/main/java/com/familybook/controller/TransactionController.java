@@ -3,13 +3,12 @@ package com.familybook.controller;
 import com.familybook.common.Result;
 import com.familybook.dto.request.TransactionQueryRequest;
 import com.familybook.dto.request.TransactionRequest;
-import com.familybook.entity.Account;
 import com.familybook.entity.Category;
 import com.familybook.entity.Transaction;
-import com.familybook.mapper.AccountMapper;
 import com.familybook.mapper.CategoryMapper;
 import com.familybook.security.SecurityUtils;
 import com.familybook.service.TransactionService;
+import com.familybook.service.UserService;
 import com.familybook.vo.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,9 +31,9 @@ public class TransactionController {
 
     private final TransactionService transactionService;
     private final CategoryMapper categoryMapper;
-    private final AccountMapper accountMapper;
+    private final UserService userService;
 
-    @Operation(summary = "新增记账", description = "记录一笔收入或支出")
+    @Operation(summary = "新增记账", description = "记录一笔收入或支出，自动更新用户余额")
     @PostMapping
     public Result<TransactionVO> record(@RequestBody TransactionRequest request) {
         Long userId = SecurityUtils.getCurrentUserId();
@@ -61,7 +60,7 @@ public class TransactionController {
         return Result.success(convertToVO(updated));
     }
 
-    @Operation(summary = "删除记账", description = "删除记账记录，自动回滚账户余额")
+    @Operation(summary = "删除记账", description = "删除记账记录，自动回滚余额")
     @DeleteMapping("/{id}")
     public Result<Void> delete(@PathVariable String id) {
         log.info("删除记账记录, 收到id字符串: {}", id);
@@ -118,7 +117,7 @@ public class TransactionController {
     }
 
     /**
-     * 将 Transaction 转换为 TransactionVO，包含分类和账户名称
+     * 将 Transaction 转换为 TransactionVO，包含分类名称
      */
     private TransactionVO convertToVO(Transaction transaction) {
         TransactionVO vo = new TransactionVO();
@@ -147,19 +146,7 @@ public class TransactionController {
             }
         }
 
-        // 查询并设置账户信息
-        if (transaction.getAccountId() != null) {
-            Account account = accountMapper.selectById(transaction.getAccountId());
-            if (account != null) {
-                vo.setAccountName(account.getName());
-                vo.setAccountType(account.getType());
-            }
-        }
-
         // 处理空值，避免显示"null"
-        if (vo.getAccountName() == null) {
-            vo.setAccountName("");
-        }
         if (vo.getCategoryName() == null) {
             vo.setCategoryName("未分类");
         }

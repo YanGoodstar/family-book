@@ -2,12 +2,12 @@ package com.familybook.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.familybook.entity.Account;
 import com.familybook.entity.Category;
 import com.familybook.entity.Transaction;
-import com.familybook.mapper.AccountMapper;
+import com.familybook.entity.User;
 import com.familybook.mapper.CategoryMapper;
 import com.familybook.mapper.TransactionMapper;
+import com.familybook.mapper.UserMapper;
 import com.familybook.service.TransactionService;
 import com.familybook.vo.CategoryStatisticsVO;
 import com.familybook.vo.MonthlyTrendVO;
@@ -30,8 +30,8 @@ import java.util.stream.Collectors;
 public class TransactionServiceImpl extends ServiceImpl<TransactionMapper, Transaction> implements TransactionService {
 
     private final TransactionMapper transactionMapper;
-    private final AccountMapper accountMapper;
     private final CategoryMapper categoryMapper;
+    private final UserMapper userMapper;
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -39,19 +39,8 @@ public class TransactionServiceImpl extends ServiceImpl<TransactionMapper, Trans
         // 1. 保存交易记录
         transactionMapper.insert(transaction);
 
-        // 2. 原子操作更新账户余额
-        Account account = accountMapper.selectById(transaction.getAccountId());
-        if (account != null) {
-            BigDecimal newBalance;
-            // type: 1=支出, 2=收入
-            if (transaction.getType() == 1) {
-                newBalance = account.getBalance().subtract(transaction.getAmount());
-            } else {
-                newBalance = account.getBalance().add(transaction.getAmount());
-            }
-            account.setBalance(newBalance);
-            accountMapper.updateById(account);
-        }
+        // 2. 更新用户余额
+        updateUserBalance(transaction.getUserId());
 
         return transaction;
     }
@@ -110,22 +99,35 @@ public class TransactionServiceImpl extends ServiceImpl<TransactionMapper, Trans
             return;
         }
 
-        // 回滚账户余额
-        Account account = accountMapper.selectById(transaction.getAccountId());
-        if (account != null) {
-            BigDecimal newBalance;
-            // 反向操作：支出加回，收入减去
-            if (transaction.getType() == 1) {
-                newBalance = account.getBalance().add(transaction.getAmount());
-            } else {
-                newBalance = account.getBalance().subtract(transaction.getAmount());
-            }
-            account.setBalance(newBalance);
-            accountMapper.updateById(account);
-        }
-
         // 软删除交易记录
         transactionMapper.deleteById(id);
+
+        // 更新用户余额
+        updateUserBalance(transaction.getUserId());
+    }
+
+    /**
+     * 更新用户余额
+     * currentBalance = initialBalance + totalIncome - totalExpense
+     */
+    private void updateUserBalance(Long userId) {
+        User user = userMapper.selectById(userId);
+        if (user == null || user.getInitialBalance() == null) {
+            return;
+        }
+
+        // 计算总收入
+        BigDecimal totalIncome = getStatistics(userId, 2, null, null);
+        // 计算总支出
+        BigDecimal totalExpense = getStatistics(userId, 1, null, null);
+
+        // 更新当前余额
+        BigDecimal currentBalance = user.getInitialBalance()
+                .add(totalIncome)
+                .subtract(totalExpense);
+
+        user.setCurrentBalance(currentBalance);
+        userMapper.updateById(user);
     }
 
     @Override

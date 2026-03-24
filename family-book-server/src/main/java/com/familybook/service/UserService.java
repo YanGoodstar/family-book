@@ -27,4 +27,15 @@ public interface UserService extends IService<User> {
      * 更新用户信息
      */
     void updateUserInfo(User user);
+
+    /**
+     * 计算用户当前余额
+     * currentBalance = initialBalance + totalIncome - totalExpense
+     */
+    java.math.BigDecimal calculateBalance(Long userId);
+
+    /**
+     * 设置用户起始金额
+     */
+    void setInitialBalance(Long userId, java.math.BigDecimal initialBalance);
 }

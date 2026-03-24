@@ -22,21 +22,6 @@ public class TransactionVO {
     private Long userId;
 
     /**
-     * 账户ID
-     */
-    private Long accountId;
-
-    /**
-     * 账户名称
-     */
-    private String accountName;
-
-    /**
-     * 账户类型
-     */
-    private Integer accountType;
-
-    /**
      * 分类ID
      */
     private Long categoryId;

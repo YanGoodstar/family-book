@@ -29,11 +29,6 @@ public class Transaction extends BaseEntity {
     private Long familyId;
 
     /**
-     * 账户ID
-     */
-    private Long accountId;
-
-    /**
      * 分类ID
      */
     private Long categoryId;

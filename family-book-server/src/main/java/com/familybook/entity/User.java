@@ -37,4 +37,14 @@ public class User extends BaseEntity {
      * 默认家庭组ID
      */
     private Long defaultFamilyId;
+
+    /**
+     * 起始金额
+     */
+    private java.math.BigDecimal initialBalance;
+
+    /**
+     * 当前余额
+     */
+    private java.math.BigDecimal currentBalance;
 }
