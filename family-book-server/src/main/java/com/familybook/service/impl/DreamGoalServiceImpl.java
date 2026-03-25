@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -22,49 +23,32 @@ import java.util.List;
 @Service
 public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal> implements DreamGoalService {
 
-    private final DreamGoalMapper dreamGoalMapper;
     private final SavingsRecordService savingsRecordService;
+    private final DreamGoalMapper dreamGoalMapper;
 
-    public DreamGoalServiceImpl(DreamGoalMapper dreamGoalMapper, SavingsRecordService savingsRecordService) {
-        this.dreamGoalMapper = dreamGoalMapper;
+    public DreamGoalServiceImpl(SavingsRecordService savingsRecordService, DreamGoalMapper dreamGoalMapper) {
         this.savingsRecordService = savingsRecordService;
+        this.dreamGoalMapper = dreamGoalMapper;
     }
 
     @Override
     public DreamGoal createDreamGoal(DreamGoal dreamGoal) {
-        // 参数校验
-        if (dreamGoal.getTargetAmount() == null || dreamGoal.getTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("目标金额必须大于0");
+        validateGoal(dreamGoal);
+
+        if (dreamGoal.getUserId() == null) {
+            throw new RuntimeException("用户信息缺失");
         }
 
-        // 设置默认值
         if (dreamGoal.getSavedAmount() == null) {
             dreamGoal.setSavedAmount(BigDecimal.ZERO);
         }
 
-        // 校验储蓄模式参数
         if (dreamGoal.getSavingsType() == null) {
-            dreamGoal.setSavingsType(1); // 默认固定金额
+            dreamGoal.setSavingsType(1);
         }
 
-        if (dreamGoal.getSavingsType() == 1) {
-            // 固定金额模式
-            if (dreamGoal.getSavingsAmount() == null || dreamGoal.getSavingsAmount().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new RuntimeException("固定储蓄金额必须大于0");
-            }
-        } else if (dreamGoal.getSavingsType() == 2) {
-            // 工资百分比模式
-            if (dreamGoal.getMonthlyIncome() == null || dreamGoal.getMonthlyIncome().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new RuntimeException("月收入必须大于0");
-            }
-            if (dreamGoal.getSavingsPercent() == null || dreamGoal.getSavingsPercent().compareTo(BigDecimal.ZERO) <= 0) {
-                throw new RuntimeException("储蓄百分比必须大于0");
-            }
-        }
-
-        // 设置默认优先级
         if (dreamGoal.getPriority() == null) {
-            dreamGoal.setPriority(1);
+            dreamGoal.setPriority(0);
         }
 
         this.save(dreamGoal);
@@ -72,18 +56,21 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
     }
 
     @Override
-    public List<DreamGoal> getUserDreamGoals(Long userId, Long familyId) {
+    public List<DreamGoal> getUserDreamGoals(Long userId) {
         LambdaQueryWrapper<DreamGoal> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DreamGoal::getUserId, userId)
                 .orderByAsc(DreamGoal::getPriority)
+                .orderByDesc(DreamGoal::getUpdateTime)
                 .orderByDesc(DreamGoal::getCreateTime);
 
-        return this.list(wrapper);
+        List<DreamGoal> goals = this.list(wrapper);
+        goals.sort(Comparator.comparing(this::isGoalCompleted));
+        return goals;
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public void executeMonthlySaving(Long dreamGoalId, BigDecimal amount) {
+    public DreamGoal saveAmount(Long dreamGoalId, BigDecimal amount, String remark) {
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("储蓄金额必须大于0");
         }
@@ -93,37 +80,28 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
             throw new RuntimeException("梦想目标不存在");
         }
 
-        // 更新已存金额
+        if (isGoalCompleted(dreamGoal)) {
+            throw new RuntimeException("目标已完成，无法继续存钱");
+        }
+
         BigDecimal currentSaved = dreamGoal.getSavedAmount() != null ? dreamGoal.getSavedAmount() : BigDecimal.ZERO;
         BigDecimal newSaved = currentSaved.add(amount);
         dreamGoal.setSavedAmount(newSaved);
         this.updateById(dreamGoal);
+        boolean completedAfterSave = isCompleted(newSaved, dreamGoal.getTargetAmount());
 
-        // 创建或更新储蓄记录
         String currentMonth = LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM"));
-        SavingsRecord existingRecord = savingsRecordService.getRecordByMonth(dreamGoalId, currentMonth);
+        SavingsRecord record = new SavingsRecord();
+        record.setGoalId(dreamGoalId);
+        record.setUserId(dreamGoal.getUserId());
+        record.setRecordMonth(currentMonth);
+        record.setPlannedAmount(calculatePlannedAmount(dreamGoal));
+        record.setActualAmount(amount);
+        record.setRemark(remark);
+        record.setIsCompleted(completedAfterSave ? 1 : 0);
+        savingsRecordService.save(record);
 
-        if (existingRecord != null) {
-            // 已有记录，累加金额
-            BigDecimal newActualAmount = existingRecord.getActualAmount().add(amount);
-            existingRecord.setActualAmount(newActualAmount);
-            // 重新判断是否达标
-            boolean isCompleted = newActualAmount.compareTo(existingRecord.getPlannedAmount()) >= 0;
-            existingRecord.setIsCompleted(isCompleted ? 1 : 0);
-            savingsRecordService.updateById(existingRecord);
-        } else {
-            // 创建新记录
-            SavingsRecord record = new SavingsRecord();
-            record.setGoalId(dreamGoalId);
-            record.setUserId(dreamGoal.getUserId());
-            record.setRecordMonth(currentMonth);
-            record.setPlannedAmount(calculatePlannedAmount(dreamGoal));
-            record.setActualAmount(amount);
-            // 判断是否达标
-            boolean isCompleted = amount.compareTo(record.getPlannedAmount()) >= 0;
-            record.setIsCompleted(isCompleted ? 1 : 0);
-            savingsRecordService.save(record);
-        }
+        return dreamGoal;
     }
 
     @Override
@@ -147,6 +125,12 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
     /**
      * 计算计划储蓄金额
      */
+    @Override
+    public BigDecimal getCommittedSavings(Long userId) {
+        BigDecimal amount = dreamGoalMapper.sumCommittedSavingsByUserId(userId);
+        return amount != null ? amount : BigDecimal.ZERO;
+    }
+
     private BigDecimal calculatePlannedAmount(DreamGoal dreamGoal) {
         if (dreamGoal.getSavingsType() == 1) {
             // 固定金额
@@ -158,5 +142,32 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
             return income.multiply(percent);
         }
         return BigDecimal.ZERO;
+    }
+
+    private void validateGoal(DreamGoal dreamGoal) {
+        if (dreamGoal.getName() == null || dreamGoal.getName().trim().isEmpty()) {
+            throw new RuntimeException("目标名称不能为空");
+        }
+        if (dreamGoal.getTargetAmount() == null || dreamGoal.getTargetAmount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("目标金额必须大于0");
+        }
+        if (dreamGoal.getSavingsType() != null && dreamGoal.getSavingsType() == 2) {
+            if (dreamGoal.getMonthlyIncome() == null || dreamGoal.getMonthlyIncome().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("月收入必须大于0");
+            }
+            if (dreamGoal.getSavingsPercent() == null || dreamGoal.getSavingsPercent().compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("储蓄百分比必须大于0");
+            }
+        }
+    }
+
+    private boolean isCompleted(BigDecimal savedAmount, BigDecimal targetAmount) {
+        BigDecimal safeSavedAmount = savedAmount != null ? savedAmount : BigDecimal.ZERO;
+        BigDecimal safeTargetAmount = targetAmount != null ? targetAmount : BigDecimal.ZERO;
+        return safeTargetAmount.compareTo(BigDecimal.ZERO) > 0 && safeSavedAmount.compareTo(safeTargetAmount) >= 0;
+    }
+
+    private boolean isGoalCompleted(DreamGoal dreamGoal) {
+        return isCompleted(dreamGoal.getSavedAmount(), dreamGoal.getTargetAmount());
     }
 }

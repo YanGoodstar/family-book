@@ -13,7 +13,7 @@ public class DreamGoalVO {
     /**
      * 目标ID
      */
-    private Long id;
+    private String id;
 
     /**
      * 目标名称
@@ -61,6 +61,11 @@ public class DreamGoalVO {
     private String icon;
 
     /**
+     * 备注
+     */
+    private String remark;
+
+    /**
      * 优先级
      */
     private Integer priority;
@@ -69,6 +74,21 @@ public class DreamGoalVO {
      * 完成进度（百分比）
      */
     private BigDecimal progress;
+
+    /**
+     * 剩余金额
+     */
+    private BigDecimal remainingAmount;
+
+    /**
+     * 目标状态
+     */
+    private Integer status;
+
+    /**
+     * 是否已完成
+     */
+    private Boolean completed;
 
     /**
      * 创建时间（格式化字符串）

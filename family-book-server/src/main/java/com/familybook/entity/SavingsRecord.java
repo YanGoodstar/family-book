@@ -3,7 +3,6 @@ package com.familybook.entity;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-
 import java.math.BigDecimal;
 
 /**
@@ -39,6 +38,11 @@ public class SavingsRecord extends BaseEntity {
      * 实际储蓄金额
      */
     private BigDecimal actualAmount;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 是否达标:0=否, 1=是

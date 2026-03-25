@@ -5,6 +5,7 @@ import com.familybook.dto.request.BalanceRequest;
 import com.familybook.dto.request.LoginRequest;
 import com.familybook.dto.request.UserUpdateRequest;
 import com.familybook.entity.User;
+import com.familybook.service.DreamGoalService;
 import com.familybook.service.UserService;
 import com.familybook.vo.BalanceVO;
 import com.familybook.vo.LoginVO;
@@ -24,6 +25,7 @@ import java.math.BigDecimal;
 public class UserController {
 
     private final UserService userService;
+    private final DreamGoalService dreamGoalService;
 
     @Operation(summary = "微信登录", description = "微信小程序登录，传入code换取token")
     @PostMapping("/login")
@@ -79,17 +81,32 @@ public class UserController {
         BalanceVO vo = new BalanceVO();
 
         if (user == null) {
-            // 未登录用户，余额默认为0
             vo.setInitialBalance(BigDecimal.ZERO);
             vo.setCurrentBalance(BigDecimal.ZERO);
+            vo.setCommittedSavings(BigDecimal.ZERO);
+            vo.setSpendableBalance(BigDecimal.ZERO);
+            vo.setOverCommitted(false);
             return Result.success(vo);
         }
 
-        // 计算当前余额
         BigDecimal currentBalance = userService.calculateBalance(user.getId());
+        BigDecimal committedSavings = dreamGoalService.getCommittedSavings(user.getId());
+
+        if (currentBalance == null) {
+            currentBalance = BigDecimal.ZERO;
+        }
+
+        if (committedSavings == null) {
+            committedSavings = BigDecimal.ZERO;
+        }
+
+        BigDecimal spendableBalance = currentBalance.subtract(committedSavings);
 
         vo.setInitialBalance(user.getInitialBalance() != null ? user.getInitialBalance() : BigDecimal.ZERO);
         vo.setCurrentBalance(currentBalance);
+        vo.setCommittedSavings(committedSavings);
+        vo.setSpendableBalance(spendableBalance);
+        vo.setOverCommitted(spendableBalance.compareTo(BigDecimal.ZERO) < 0);
 
         return Result.success(vo);
     }
@@ -106,10 +123,24 @@ public class UserController {
 
         // 重新计算余额
         BigDecimal currentBalance = userService.calculateBalance(user.getId());
+        BigDecimal committedSavings = dreamGoalService.getCommittedSavings(user.getId());
+
+        if (currentBalance == null) {
+            currentBalance = BigDecimal.ZERO;
+        }
+
+        if (committedSavings == null) {
+            committedSavings = BigDecimal.ZERO;
+        }
+
+        BigDecimal spendableBalance = currentBalance.subtract(committedSavings);
 
         BalanceVO vo = new BalanceVO();
         vo.setInitialBalance(request.getInitialBalance());
         vo.setCurrentBalance(currentBalance);
+        vo.setCommittedSavings(committedSavings);
+        vo.setSpendableBalance(spendableBalance);
+        vo.setOverCommitted(spendableBalance.compareTo(BigDecimal.ZERO) < 0);
 
         return Result.success(vo);
     }

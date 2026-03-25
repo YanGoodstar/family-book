@@ -57,6 +57,11 @@ public class DreamGoalRequest {
     private String icon;
 
     /**
+     * 备注
+     */
+    private String remark;
+
+    /**
      * 优先级
      */
     private Integer priority;

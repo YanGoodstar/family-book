@@ -19,15 +19,17 @@ public interface DreamGoalService extends IService<DreamGoal> {
     /**
      * 获取用户梦想目标列表
      */
-    List<DreamGoal> getUserDreamGoals(Long userId, Long familyId);
+    List<DreamGoal> getUserDreamGoals(Long userId);
 
     /**
-     * 执行月度储蓄
+     * 存一笔钱到梦想目标
      */
-    void executeMonthlySaving(Long dreamGoalId, BigDecimal amount);
+    DreamGoal saveAmount(Long dreamGoalId, BigDecimal amount, String remark);
 
     /**
      * 获取储蓄进度
      */
     BigDecimal getSavingProgress(Long dreamGoalId);
+
+    BigDecimal getCommittedSavings(Long userId);
 }
