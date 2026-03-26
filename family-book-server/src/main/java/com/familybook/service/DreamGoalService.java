@@ -27,6 +27,11 @@ public interface DreamGoalService extends IService<DreamGoal> {
     DreamGoal saveAmount(Long dreamGoalId, BigDecimal amount, String remark);
 
     /**
+     * 将目标归档并释放承诺金额
+     */
+    DreamGoal archiveGoal(Long dreamGoalId);
+
+    /**
      * 获取储蓄进度
      */
     BigDecimal getSavingProgress(Long dreamGoalId);

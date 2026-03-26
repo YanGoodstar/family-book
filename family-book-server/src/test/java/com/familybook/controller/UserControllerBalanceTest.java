@@ -3,6 +3,7 @@ package com.familybook.controller;
 import com.familybook.common.Result;
 import com.familybook.dto.request.BalanceRequest;
 import com.familybook.entity.User;
+import com.familybook.security.JwtTokenProvider;
 import com.familybook.service.DreamGoalService;
 import com.familybook.service.UserService;
 import com.familybook.vo.BalanceVO;
@@ -19,8 +20,9 @@ class UserControllerBalanceTest {
 
     private final UserService userService = mock(UserService.class);
     private final DreamGoalService dreamGoalService = mock(DreamGoalService.class);
+    private final JwtTokenProvider jwtTokenProvider = mock(JwtTokenProvider.class);
 
-    private final UserController controller = new UserController(userService, dreamGoalService);
+    private final UserController controller = new UserController(userService, dreamGoalService, jwtTokenProvider);
 
     @Test
     void loggedInUserReturnsBalanceWithDreamGoalMetrics() {
@@ -35,6 +37,8 @@ class UserControllerBalanceTest {
         Result<BalanceVO> result = controller.getBalance();
         BalanceVO vo = result.getData();
 
+        assertThat(vo.isLoggedIn()).isTrue();
+        assertThat(vo.isInitialBalanceSet()).isTrue();
         assertThat(vo.getCurrentBalance()).isEqualByComparingTo(new BigDecimal("600.00"));
         assertThat(vo.getCommittedSavings()).isEqualByComparingTo(new BigDecimal("200.00"));
         assertThat(vo.getSpendableBalance()).isEqualByComparingTo(new BigDecimal("400.00"));
@@ -48,11 +52,32 @@ class UserControllerBalanceTest {
         Result<BalanceVO> result = controller.getBalance();
         BalanceVO vo = result.getData();
 
+        assertThat(vo.isLoggedIn()).isFalse();
+        assertThat(vo.isInitialBalanceSet()).isFalse();
         assertThat(vo.getInitialBalance()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(vo.getCurrentBalance()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(vo.getCommittedSavings()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(vo.getSpendableBalance()).isEqualByComparingTo(BigDecimal.ZERO);
         assertThat(vo.isOverCommitted()).isFalse();
+    }
+
+    @Test
+    void loggedInUserWithoutInitialBalanceReturnsUnsetState() {
+        User user = new User();
+        user.setId(9L);
+        user.setInitialBalance(null);
+
+        when(userService.getCurrentUser()).thenReturn(user);
+        when(userService.calculateBalance(9L)).thenReturn(BigDecimal.ZERO);
+        when(dreamGoalService.getCommittedSavings(9L)).thenReturn(BigDecimal.ZERO);
+
+        Result<BalanceVO> result = controller.getBalance();
+        BalanceVO vo = result.getData();
+
+        assertThat(vo.isLoggedIn()).isTrue();
+        assertThat(vo.isInitialBalanceSet()).isFalse();
+        assertThat(vo.getInitialBalance()).isEqualByComparingTo(BigDecimal.ZERO);
+        assertThat(vo.getCurrentBalance()).isEqualByComparingTo(BigDecimal.ZERO);
     }
 
     @Test
@@ -68,6 +93,8 @@ class UserControllerBalanceTest {
         Result<BalanceVO> result = controller.getBalance();
         BalanceVO vo = result.getData();
 
+        assertThat(vo.isLoggedIn()).isTrue();
+        assertThat(vo.isInitialBalanceSet()).isTrue();
         assertThat(vo.getSpendableBalance()).isEqualByComparingTo(new BigDecimal("-400.00"));
         assertThat(vo.isOverCommitted()).isTrue();
     }
@@ -88,6 +115,8 @@ class UserControllerBalanceTest {
         BalanceVO vo = result.getData();
 
         verify(userService).setInitialBalance(11L, new BigDecimal("1500.00"));
+        assertThat(vo.isLoggedIn()).isTrue();
+        assertThat(vo.isInitialBalanceSet()).isTrue();
         assertThat(vo.getInitialBalance()).isEqualByComparingTo(new BigDecimal("1500.00"));
         assertThat(vo.getCurrentBalance()).isEqualByComparingTo(new BigDecimal("2200.00"));
         assertThat(vo.getCommittedSavings()).isEqualByComparingTo(new BigDecimal("700.00"));

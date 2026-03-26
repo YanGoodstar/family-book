@@ -49,7 +49,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
             wxAppId, wxSecret, code
         );
-
+        log.info("wxAppId",wxAppId);
+        log.info("wxSecret",wxSecret);
         JSONObject response = httpUtils.get(url);
         if (response == null || response.containsKey("errcode")) {
             log.error("WeChat login failed: {}", response);

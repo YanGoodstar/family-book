@@ -2,6 +2,7 @@ package com.familybook.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.familybook.constant.DreamGoalStatus;
 import com.familybook.entity.DreamGoal;
 import com.familybook.entity.SavingsRecord;
 import com.familybook.mapper.DreamGoalMapper;
@@ -14,7 +15,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -51,6 +51,10 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
             dreamGoal.setPriority(0);
         }
 
+        if (dreamGoal.getGoalStatus() == null) {
+            dreamGoal.setGoalStatus(DreamGoalStatus.ACTIVE);
+        }
+
         this.save(dreamGoal);
         return dreamGoal;
     }
@@ -59,13 +63,12 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
     public List<DreamGoal> getUserDreamGoals(Long userId) {
         LambdaQueryWrapper<DreamGoal> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DreamGoal::getUserId, userId)
+                .orderByAsc(DreamGoal::getGoalStatus)
                 .orderByAsc(DreamGoal::getPriority)
                 .orderByDesc(DreamGoal::getUpdateTime)
                 .orderByDesc(DreamGoal::getCreateTime);
 
-        List<DreamGoal> goals = this.list(wrapper);
-        goals.sort(Comparator.comparing(this::isGoalCompleted));
-        return goals;
+        return this.list(wrapper);
     }
 
     @Override
@@ -78,6 +81,10 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
         DreamGoal dreamGoal = this.getById(dreamGoalId);
         if (dreamGoal == null) {
             throw new RuntimeException("梦想目标不存在");
+        }
+
+        if (DreamGoalStatus.isArchived(dreamGoal.getGoalStatus())) {
+            throw new RuntimeException("目标已归档，无法继续存钱");
         }
 
         if (isGoalCompleted(dreamGoal)) {
@@ -101,6 +108,25 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
         record.setIsCompleted(completedAfterSave ? 1 : 0);
         savingsRecordService.save(record);
 
+        return dreamGoal;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public DreamGoal archiveGoal(Long dreamGoalId) {
+        DreamGoal dreamGoal = this.getById(dreamGoalId);
+        if (dreamGoal == null) {
+            throw new RuntimeException("梦想目标不存在");
+        }
+
+        if (DreamGoalStatus.isArchived(dreamGoal.getGoalStatus())) {
+            throw new RuntimeException("目标已归档");
+        }
+
+        dreamGoal.setGoalStatus(isGoalCompleted(dreamGoal)
+                ? DreamGoalStatus.ARCHIVED_COMPLETED
+                : DreamGoalStatus.ARCHIVED_STOPPED);
+        this.updateById(dreamGoal);
         return dreamGoal;
     }
 

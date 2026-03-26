@@ -17,7 +17,7 @@ public interface DreamGoalMapper extends BaseMapper<DreamGoal> {
     @Select("""
             SELECT COALESCE(SUM(saved_amount), 0)
             FROM t_dream_goal
-            WHERE user_id = #{userId} AND status = 1
+            WHERE user_id = #{userId} AND status = 1 AND goal_status = 1
             """)
     BigDecimal sumCommittedSavingsByUserId(Long userId);
 }

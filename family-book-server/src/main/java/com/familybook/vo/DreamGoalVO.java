@@ -81,14 +81,24 @@ public class DreamGoalVO {
     private BigDecimal remainingAmount;
 
     /**
-     * 目标状态
+     * 逻辑删除状态
      */
     private Integer status;
+
+    /**
+     * 业务状态：1=进行中 2=已完成归档 3=已停止归档
+     */
+    private Integer goalStatus;
 
     /**
      * 是否已完成
      */
     private Boolean completed;
+
+    /**
+     * 更新时间（格式化字符串）
+     */
+    private String updateTime;
 
     /**
      * 创建时间（格式化字符串）

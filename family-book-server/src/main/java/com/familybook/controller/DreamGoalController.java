@@ -1,6 +1,7 @@
 package com.familybook.controller;
 
 import com.familybook.common.Result;
+import com.familybook.constant.DreamGoalStatus;
 import com.familybook.dto.request.DreamGoalRequest;
 import com.familybook.dto.request.DreamGoalSaveRequest;
 import com.familybook.entity.DreamGoal;
@@ -86,6 +87,10 @@ public class DreamGoalController {
             return Result.error("无权修改此目标");
         }
 
+        if (DreamGoalStatus.isArchived(dreamGoal.getGoalStatus())) {
+            return Result.error("已归档目标不支持编辑");
+        }
+
         applyUpdateFields(request, dreamGoal);
         dreamGoalService.updateById(dreamGoal);
 
@@ -124,8 +129,38 @@ public class DreamGoalController {
             return Result.error("无权操作此目标");
         }
 
+        if (DreamGoalStatus.isArchived(dreamGoal.getGoalStatus())) {
+            return Result.error("目标已归档，无法继续存钱");
+        }
+
+        if (isCompleted(dreamGoal.getSavedAmount(), dreamGoal.getTargetAmount())) {
+            return Result.error("目标已完成，无法继续存钱");
+        }
+
         DreamGoal updated = dreamGoalService.saveAmount(id, request.getAmount(), normalizeText(request.getRemark()));
         return Result.success(buildDashboard(updated));
+    }
+
+    @Operation(summary = "归档梦想目标", description = "结束目标承诺并释放已承诺储蓄")
+    @PostMapping("/{id}/archive")
+    public Result<DreamGoalDashboardVO> archive(@PathVariable Long id) {
+        Long userId = SecurityUtils.getCurrentUserId();
+
+        DreamGoal dreamGoal = dreamGoalService.getById(id);
+        if (dreamGoal == null) {
+            return Result.error("梦想目标不存在");
+        }
+
+        if (!dreamGoal.getUserId().equals(userId)) {
+            return Result.error("无权操作此目标");
+        }
+
+        if (DreamGoalStatus.isArchived(dreamGoal.getGoalStatus())) {
+            return Result.error("目标已归档");
+        }
+
+        DreamGoal archivedGoal = dreamGoalService.archiveGoal(id);
+        return Result.success(buildDashboard(archivedGoal));
     }
 
     @Operation(summary = "获取目标详情聚合数据", description = "获取目标详情、进度与最近存钱记录")
@@ -174,6 +209,9 @@ public class DreamGoalController {
         if (dreamGoal.getCreateTime() != null) {
             vo.setCreateTime(dreamGoal.getCreateTime().toString().replace('T', ' '));
         }
+        if (dreamGoal.getUpdateTime() != null) {
+            vo.setUpdateTime(dreamGoal.getUpdateTime().toString().replace('T', ' '));
+        }
 
         BigDecimal remainingAmount = BigDecimal.ZERO;
         if (targetAmount != null) {
@@ -185,7 +223,8 @@ public class DreamGoalController {
         boolean completed = isCompleted(savedAmount, targetAmount);
         vo.setRemainingAmount(remainingAmount);
         vo.setCompleted(completed);
-        vo.setStatus(completed ? 2 : 1);
+        int goalStatus = DreamGoalStatus.normalize(dreamGoal.getGoalStatus());
+        vo.setGoalStatus(goalStatus);
 
         return vo;
     }
