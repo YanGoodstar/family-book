@@ -29,6 +29,7 @@ class UserControllerBalanceTest {
         User user = new User();
         user.setId(42L);
         user.setInitialBalance(new BigDecimal("100.00"));
+        user.setInitialBalanceSet(true);
 
         when(userService.getCurrentUser()).thenReturn(user);
         when(userService.calculateBalance(42L)).thenReturn(new BigDecimal("600.00"));
@@ -85,6 +86,7 @@ class UserControllerBalanceTest {
         User user = new User();
         user.setId(7L);
         user.setInitialBalance(new BigDecimal("500.00"));
+        user.setInitialBalanceSet(true);
 
         when(userService.getCurrentUser()).thenReturn(user);
         when(userService.calculateBalance(7L)).thenReturn(new BigDecimal("800.00"));
@@ -103,6 +105,7 @@ class UserControllerBalanceTest {
     void setBalanceReturnsUpdatedCommitmentMetrics() {
         User user = new User();
         user.setId(11L);
+        user.setInitialBalanceSet(false);
 
         BalanceRequest request = new BalanceRequest();
         request.setInitialBalance(new BigDecimal("1500.00"));

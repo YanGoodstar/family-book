@@ -6,11 +6,15 @@ import org.springframework.security.core.context.SecurityContextHolder;
 public class SecurityUtils {
 
     public static Long getCurrentUserId() {
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+
+        Object principal = authentication.getPrincipal();
         if (principal instanceof Long) {
             return (Long) principal;
         }
-        return 0L;
-//        return null;
+        return null;
     }
 }

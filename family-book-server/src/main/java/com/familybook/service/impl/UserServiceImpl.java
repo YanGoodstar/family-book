@@ -64,6 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             user = new User();
             user.setOpenid(openid);
             user.setNickname("微信用户" + UUID.randomUUID().toString().substring(0, 6));
+            user.setInitialBalanceSet(false);
             userMapper.insert(user);
         }
 
@@ -115,6 +116,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         user.setInitialBalance(initialBalance);
+        user.setInitialBalanceSet(true);
 
         // 重新计算当前余额
         BigDecimal currentBalance = calculateBalance(userId);

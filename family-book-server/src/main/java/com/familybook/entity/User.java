@@ -44,6 +44,11 @@ public class User extends BaseEntity {
     private java.math.BigDecimal initialBalance;
 
     /**
+     * 是否已设置起始金额
+     */
+    private Boolean initialBalanceSet;
+
+    /**
      * 当前余额
      */
     private java.math.BigDecimal currentBalance;

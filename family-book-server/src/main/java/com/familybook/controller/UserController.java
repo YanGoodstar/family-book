@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -60,7 +61,7 @@ public class UserController {
         return Result.success(userVO);
     }
 
-    @Operation(summary = "更新用户信息", description = "更新用户昵称、头像等信息")
+    @Operation(summary = "更新用户信息", description = "本期仅安全更新昵称与头像")
     @PutMapping("/info")
     public Result<Void> updateUserInfo(@RequestBody UserUpdateRequest request) {
         User user = userService.getCurrentUser();
@@ -68,7 +69,16 @@ public class UserController {
             return Result.error("用户未登录");
         }
 
-        BeanUtils.copyProperties(request, user);
+        if (request != null) {
+            if (StringUtils.hasText(request.getNickname())) {
+                user.setNickname(request.getNickname().trim());
+            }
+
+            if (StringUtils.hasText(request.getAvatarUrl())) {
+                user.setAvatarUrl(request.getAvatarUrl().trim());
+            }
+        }
+
         userService.updateUserInfo(user);
         return Result.success();
     }
@@ -99,6 +109,7 @@ public class UserController {
         BigDecimal currentBalance = userService.calculateBalance(user.getId());
         BigDecimal committedSavings = dreamGoalService.getCommittedSavings(user.getId());
         user.setInitialBalance(request.getInitialBalance());
+        user.setInitialBalanceSet(true);
         return Result.success(buildLoggedInBalance(user, currentBalance, committedSavings));
     }
 
@@ -119,10 +130,11 @@ public class UserController {
         BigDecimal safeCommittedSavings = committedSavings != null ? committedSavings : BigDecimal.ZERO;
         BigDecimal safeInitialBalance = user.getInitialBalance() != null ? user.getInitialBalance() : BigDecimal.ZERO;
         BigDecimal spendableBalance = safeCurrentBalance.subtract(safeCommittedSavings);
+        boolean initialBalanceSet = Boolean.TRUE.equals(user.getInitialBalanceSet());
 
         BalanceVO vo = new BalanceVO();
         vo.setLoggedIn(true);
-        vo.setInitialBalanceSet(user.getInitialBalance() != null);
+        vo.setInitialBalanceSet(initialBalanceSet);
         vo.setInitialBalance(safeInitialBalance);
         vo.setCurrentBalance(safeCurrentBalance);
         vo.setCommittedSavings(safeCommittedSavings);
