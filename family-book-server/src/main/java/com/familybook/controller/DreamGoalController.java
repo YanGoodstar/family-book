@@ -1,6 +1,7 @@
 package com.familybook.controller;
 
 import com.familybook.common.Result;
+import com.familybook.dto.request.DreamGoalArchiveRequest;
 import com.familybook.constant.DreamGoalStatus;
 import com.familybook.dto.request.DreamGoalRequest;
 import com.familybook.dto.request.DreamGoalSaveRequest;
@@ -143,7 +144,10 @@ public class DreamGoalController {
 
     @Operation(summary = "归档梦想目标", description = "结束目标承诺并释放已承诺储蓄")
     @PostMapping("/{id}/archive")
-    public Result<DreamGoalDashboardVO> archive(@PathVariable Long id) {
+    public Result<DreamGoalDashboardVO> archive(
+            @PathVariable Long id,
+            @RequestBody(required = false) DreamGoalArchiveRequest request
+    ) {
         Long userId = SecurityUtils.getCurrentUserId();
 
         DreamGoal dreamGoal = dreamGoalService.getById(id);
@@ -159,7 +163,10 @@ public class DreamGoalController {
             return Result.error("目标已归档");
         }
 
-        DreamGoal archivedGoal = dreamGoalService.archiveGoal(id);
+        boolean createExpense = request != null && Boolean.TRUE.equals(request.getCreateExpense());
+        Long expenseCategoryId = request != null ? request.getExpenseCategoryId() : null;
+
+        DreamGoal archivedGoal = dreamGoalService.archiveGoal(id, createExpense, expenseCategoryId);
         return Result.success(buildDashboard(archivedGoal));
     }
 

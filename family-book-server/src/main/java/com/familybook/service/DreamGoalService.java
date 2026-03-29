@@ -29,7 +29,7 @@ public interface DreamGoalService extends IService<DreamGoal> {
     /**
      * 将目标归档并释放承诺金额
      */
-    DreamGoal archiveGoal(Long dreamGoalId);
+    DreamGoal archiveGoal(Long dreamGoalId, boolean createExpense, Long expenseCategoryId);
 
     /**
      * 获取储蓄进度

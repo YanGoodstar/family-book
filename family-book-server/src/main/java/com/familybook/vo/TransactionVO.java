@@ -24,7 +24,7 @@ public class TransactionVO {
     /**
      * 分类ID
      */
-    private Long categoryId;
+    private String categoryId;
 
     /**
      * 分类名称

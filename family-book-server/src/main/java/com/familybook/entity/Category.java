@@ -31,7 +31,7 @@ public class Category extends BaseEntity {
     private String name;
 
     /**
-     * 分类类型：1=收入，2=支出
+     * 分类类型：1=支出，2=收入
      */
     private Integer type;
 

@@ -3,17 +3,22 @@ package com.familybook.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.familybook.constant.DreamGoalStatus;
+import com.familybook.entity.Category;
 import com.familybook.entity.DreamGoal;
 import com.familybook.entity.SavingsRecord;
+import com.familybook.entity.Transaction;
+import com.familybook.mapper.CategoryMapper;
 import com.familybook.mapper.DreamGoalMapper;
 import com.familybook.service.DreamGoalService;
 import com.familybook.service.SavingsRecordService;
+import com.familybook.service.TransactionService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -25,10 +30,19 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
 
     private final SavingsRecordService savingsRecordService;
     private final DreamGoalMapper dreamGoalMapper;
+    private final TransactionService transactionService;
+    private final CategoryMapper categoryMapper;
 
-    public DreamGoalServiceImpl(SavingsRecordService savingsRecordService, DreamGoalMapper dreamGoalMapper) {
+    public DreamGoalServiceImpl(
+            SavingsRecordService savingsRecordService,
+            DreamGoalMapper dreamGoalMapper,
+            TransactionService transactionService,
+            CategoryMapper categoryMapper
+    ) {
         this.savingsRecordService = savingsRecordService;
         this.dreamGoalMapper = dreamGoalMapper;
+        this.transactionService = transactionService;
+        this.categoryMapper = categoryMapper;
     }
 
     @Override
@@ -113,7 +127,7 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
 
     @Override
     @Transactional(rollbackFor = Exception.class)
-    public DreamGoal archiveGoal(Long dreamGoalId) {
+    public DreamGoal archiveGoal(Long dreamGoalId, boolean createExpense, Long expenseCategoryId) {
         DreamGoal dreamGoal = this.getById(dreamGoalId);
         if (dreamGoal == null) {
             throw new RuntimeException("梦想目标不存在");
@@ -121,6 +135,10 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
 
         if (DreamGoalStatus.isArchived(dreamGoal.getGoalStatus())) {
             throw new RuntimeException("目标已归档");
+        }
+
+        if (createExpense) {
+            createArchiveExpense(dreamGoal, expenseCategoryId);
         }
 
         dreamGoal.setGoalStatus(isGoalCompleted(dreamGoal)
@@ -155,6 +173,32 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
     public BigDecimal getCommittedSavings(Long userId) {
         BigDecimal amount = dreamGoalMapper.sumCommittedSavingsByUserId(userId);
         return amount != null ? amount : BigDecimal.ZERO;
+    }
+
+    private void createArchiveExpense(DreamGoal dreamGoal, Long expenseCategoryId) {
+        BigDecimal savedAmount = dreamGoal.getSavedAmount() != null ? dreamGoal.getSavedAmount() : BigDecimal.ZERO;
+        if (savedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new RuntimeException("当前已存金额为0，无法生成支出");
+        }
+
+        if (expenseCategoryId == null) {
+            throw new RuntimeException("请选择支出分类");
+        }
+
+        Category category = categoryMapper.selectById(expenseCategoryId);
+        if (!isValidExpenseCategory(dreamGoal.getUserId(), category)) {
+            throw new RuntimeException("请选择有效的支出分类");
+        }
+
+        Transaction transaction = new Transaction();
+        transaction.setUserId(dreamGoal.getUserId());
+        transaction.setCategoryId(expenseCategoryId);
+        transaction.setType(1);
+        transaction.setAmount(savedAmount);
+        transaction.setRemark(buildArchiveExpenseRemark(dreamGoal.getName()));
+        transaction.setTransactionDate(LocalDate.now());
+        transaction.setTransactionTime(LocalTime.now().withNano(0));
+        transactionService.record(transaction);
     }
 
     private BigDecimal calculatePlannedAmount(DreamGoal dreamGoal) {
@@ -195,5 +239,24 @@ public class DreamGoalServiceImpl extends ServiceImpl<DreamGoalMapper, DreamGoal
 
     private boolean isGoalCompleted(DreamGoal dreamGoal) {
         return isCompleted(dreamGoal.getSavedAmount(), dreamGoal.getTargetAmount());
+    }
+
+    private boolean isValidExpenseCategory(Long userId, Category category) {
+        if (category == null) {
+            return false;
+        }
+
+        if (!Integer.valueOf(1).equals(category.getType())) {
+            return false;
+        }
+
+        return category.getUserId() == null || category.getUserId().equals(userId);
+    }
+
+    private String buildArchiveExpenseRemark(String goalName) {
+        String normalizedGoalName = goalName == null ? "" : goalName.trim();
+        return normalizedGoalName.isEmpty()
+                ? "梦想目标归档支出"
+                : "梦想目标归档支出：" + normalizedGoalName;
     }
 }

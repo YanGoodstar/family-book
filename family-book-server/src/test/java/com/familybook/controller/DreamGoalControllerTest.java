@@ -1,6 +1,7 @@
 package com.familybook.controller;
 
 import com.familybook.common.Result;
+import com.familybook.dto.request.DreamGoalArchiveRequest;
 import com.familybook.dto.request.DreamGoalSaveRequest;
 import com.familybook.entity.DreamGoal;
 import com.familybook.service.DreamGoalService;
@@ -19,6 +20,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -128,11 +130,29 @@ class DreamGoalControllerTest {
 
         when(dreamGoalService.getById(11L)).thenReturn(goal);
 
-        Result<DreamGoalDashboardVO> result = controller.archive(11L);
+        Result<DreamGoalDashboardVO> result = controller.archive(11L, null);
 
         assertThat(result.getCode()).isEqualTo(500);
         assertThat(result.getMessage()).contains("已归档");
-        verify(dreamGoalService, never()).archiveGoal(anyLong());
+        verify(dreamGoalService, never()).archiveGoal(anyLong(), anyBoolean(), any());
+    }
+
+    @Test
+    void archiveShouldForwardExpenseOptionsToService() {
+        loginAs(7L);
+        DreamGoal goal = createGoal(15L, 7L, 1, "1000.00", "300.00");
+        DreamGoalArchiveRequest request = new DreamGoalArchiveRequest();
+        request.setCreateExpense(true);
+        request.setExpenseCategoryId(88L);
+
+        when(dreamGoalService.getById(15L)).thenReturn(goal);
+        when(dreamGoalService.archiveGoal(15L, true, 88L)).thenReturn(goal);
+        when(savingsRecordService.getRecentRecordsByGoalId(15L, 20)).thenReturn(Collections.emptyList());
+
+        Result<DreamGoalDashboardVO> result = controller.archive(15L, request);
+
+        assertThat(result.getCode()).isEqualTo(200);
+        verify(dreamGoalService).archiveGoal(15L, true, 88L);
     }
 
     private DreamGoalVO invokeConvertToVO(DreamGoal goal) throws Exception {
