@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: family-book-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root123456}
+      MYSQL_DATABASE: family_book
+      MYSQL_USER: ${DB_USERNAME:-familybook}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-familybook123}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./family-book-server/src/main/resources/db/migration:/docker-entrypoint-initdb.d
+    ports:
+      - "3306:3306"
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-time-zone=+08:00
+    networks:
+      - family-book-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  app:
+    build:
+      context: ./family-book-server
+      dockerfile: Dockerfile
+    container_name: family-book-app
+    restart: always
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USERNAME: ${DB_USERNAME:-familybook}
+      DB_PASSWORD: ${DB_PASSWORD:-familybook123}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please-use-strong-secret}
+      WX_APPID: ${WX_APPID:-}
+      WX_SECRET: ${WX_SECRET:-}
+      SERVER_PORT: 9000
+      SPRING_PROFILES_ACTIVE: prod
+      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx768m -Djava.security.egd=file:/dev/./urandom}
+      XXL_JOB_ADMIN: ${XXL_JOB_ADMIN:-http://localhost:8080/xxl-job-admin}
+      XXL_JOB_TOKEN: ${XXL_JOB_TOKEN:-}
+    ports:
+      - "9000:9000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - family-book-network
+    volumes:
+      - ./logs:/var/log/family-book
+
+  nginx:
+    image: nginx:alpine
+    container_name: family-book-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./family-book-server/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./family-book-server/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./family-book-server/nginx/ssl:/etc/nginx/ssl:ro
+      - ./family-book-server/nginx/html:/usr/share/nginx/html:ro
+    depends_on:
+      - app
+    networks:
+      - family-book-network
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  family-book-network:
+    driver: bridge
