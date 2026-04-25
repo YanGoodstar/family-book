@@ -49,7 +49,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code",
             wxAppId, wxSecret, code
         );
-
+        log.info("wxAppId",wxAppId);
+        log.info("wxSecret",wxSecret);
         JSONObject response = httpUtils.get(url);
         if (response == null || response.containsKey("errcode")) {
             log.error("WeChat login failed: {}", response);
@@ -63,6 +64,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             user = new User();
             user.setOpenid(openid);
             user.setNickname("微信用户" + UUID.randomUUID().toString().substring(0, 6));
+            user.setInitialBalanceSet(false);
             userMapper.insert(user);
         }
 
@@ -114,6 +116,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         }
 
         user.setInitialBalance(initialBalance);
+        user.setInitialBalanceSet(true);
 
         // 重新计算当前余额
         BigDecimal currentBalance = calculateBalance(userId);

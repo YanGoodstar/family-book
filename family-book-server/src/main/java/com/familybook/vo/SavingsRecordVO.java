@@ -13,12 +13,12 @@ public class SavingsRecordVO {
     /**
      * 记录ID
      */
-    private Long id;
+    private String id;
 
     /**
      * 目标ID
      */
-    private Long goalId;
+    private String goalId;
 
     /**
      * 记录月份(yyyy-MM)
@@ -34,6 +34,16 @@ public class SavingsRecordVO {
      * 实际储蓄金额
      */
     private BigDecimal actualAmount;
+
+    /**
+     * 前端消费的金额字段
+     */
+    private BigDecimal amount;
+
+    /**
+     * 备注
+     */
+    private String remark;
 
     /**
      * 是否达标:0=否, 1=是

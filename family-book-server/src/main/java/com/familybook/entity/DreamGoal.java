@@ -72,7 +72,17 @@ public class DreamGoal extends BaseEntity {
     private String icon;
 
     /**
+     * 备注
+     */
+    private String remark;
+
+    /**
      * 优先级
      */
     private Integer priority;
+
+    /**
+     * 业务状态：1=进行中 2=已完成归档 3=已停止归档
+     */
+    private Integer goalStatus;
 }

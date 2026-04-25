@@ -125,6 +125,9 @@ public class TransactionController {
 
         // 将ID转为字符串，避免JavaScript精度丢失
         vo.setId(String.valueOf(transaction.getId()));
+        if (transaction.getCategoryId() != null) {
+            vo.setCategoryId(String.valueOf(transaction.getCategoryId()));
+        }
 
         // 设置日期时间字符串格式
         if (transaction.getTransactionDate() != null) {

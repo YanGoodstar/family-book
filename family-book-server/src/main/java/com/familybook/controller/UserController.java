@@ -5,6 +5,8 @@ import com.familybook.dto.request.BalanceRequest;
 import com.familybook.dto.request.LoginRequest;
 import com.familybook.dto.request.UserUpdateRequest;
 import com.familybook.entity.User;
+import com.familybook.security.JwtTokenProvider;
+import com.familybook.service.DreamGoalService;
 import com.familybook.service.UserService;
 import com.familybook.vo.BalanceVO;
 import com.familybook.vo.LoginVO;
@@ -13,24 +15,28 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 
-@Tag(name = "用户管理", description = "用户登录、用户信息相关接口")
+@Tag(name = "用户管理", description = "用户登录、用户信息与资产接口")
 @RestController
 @RequestMapping("/api/v1/user")
 @RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
+    private final DreamGoalService dreamGoalService;
+    private final JwtTokenProvider jwtTokenProvider;
 
-    @Operation(summary = "微信登录", description = "微信小程序登录，传入code换取token")
+    @Operation(summary = "微信登录", description = "微信小程序登录，传入 code 换取 token")
     @PostMapping("/login")
     public Result<LoginVO> login(@RequestBody LoginRequest request) {
         String token = userService.wxLogin(request.getCode());
+        Long userId = jwtTokenProvider.getUserIdFromToken(token);
+        User user = userService.getById(userId);
 
-        User user = userService.getCurrentUser();
         UserVO userVO = new UserVO();
         if (user != null) {
             BeanUtils.copyProperties(user, userVO);
@@ -39,16 +45,13 @@ public class UserController {
         LoginVO loginVO = new LoginVO();
         loginVO.setToken(token);
         loginVO.setUser(userVO);
-
         return Result.success(loginVO);
     }
 
-    @Operation(summary = "获取当前用户信息", description = "获取登录用户的详细信息，未登录返回null")
+    @Operation(summary = "获取当前用户信息", description = "获取登录用户的详细信息，未登录返回 null")
     @GetMapping("/info")
     public Result<UserVO> getUserInfo() {
         User user = userService.getCurrentUser();
-
-        // 未登录用户返回null，不报错
         if (user == null) {
             return Result.success(null);
         }
@@ -58,7 +61,7 @@ public class UserController {
         return Result.success(userVO);
     }
 
-    @Operation(summary = "更新用户信息", description = "更新用户昵称、头像等信息")
+    @Operation(summary = "更新用户信息", description = "本期仅安全更新昵称与头像")
     @PutMapping("/info")
     public Result<Void> updateUserInfo(@RequestBody UserUpdateRequest request) {
         User user = userService.getCurrentUser();
@@ -66,35 +69,34 @@ public class UserController {
             return Result.error("用户未登录");
         }
 
-        BeanUtils.copyProperties(request, user);
+        if (request != null) {
+            if (StringUtils.hasText(request.getNickname())) {
+                user.setNickname(request.getNickname().trim());
+            }
+
+            if (StringUtils.hasText(request.getAvatarUrl())) {
+                user.setAvatarUrl(request.getAvatarUrl().trim());
+            }
+        }
+
         userService.updateUserInfo(user);
         return Result.success();
     }
 
-    @Operation(summary = "获取用户余额", description = "获取当前用户的起始金额和当前余额，未登录返回0")
+    @Operation(summary = "获取用户余额", description = "返回余额、承诺储蓄与登录/初始化状态")
     @GetMapping("/balance")
     public Result<BalanceVO> getBalance() {
         User user = userService.getCurrentUser();
-
-        BalanceVO vo = new BalanceVO();
-
         if (user == null) {
-            // 未登录用户，余额默认为0
-            vo.setInitialBalance(BigDecimal.ZERO);
-            vo.setCurrentBalance(BigDecimal.ZERO);
-            return Result.success(vo);
+            return Result.success(buildAnonymousBalance());
         }
 
-        // 计算当前余额
         BigDecimal currentBalance = userService.calculateBalance(user.getId());
-
-        vo.setInitialBalance(user.getInitialBalance() != null ? user.getInitialBalance() : BigDecimal.ZERO);
-        vo.setCurrentBalance(currentBalance);
-
-        return Result.success(vo);
+        BigDecimal committedSavings = dreamGoalService.getCommittedSavings(user.getId());
+        return Result.success(buildLoggedInBalance(user, currentBalance, committedSavings));
     }
 
-    @Operation(summary = "设置起始金额", description = "设置用户的起始金额，会重新计算当前余额")
+    @Operation(summary = "设置起始金额", description = "设置用户起始金额，并返回更新后的余额视图")
     @PostMapping("/balance")
     public Result<BalanceVO> setBalance(@RequestBody BalanceRequest request) {
         User user = userService.getCurrentUser();
@@ -104,13 +106,40 @@ public class UserController {
 
         userService.setInitialBalance(user.getId(), request.getInitialBalance());
 
-        // 重新计算余额
         BigDecimal currentBalance = userService.calculateBalance(user.getId());
+        BigDecimal committedSavings = dreamGoalService.getCommittedSavings(user.getId());
+        user.setInitialBalance(request.getInitialBalance());
+        user.setInitialBalanceSet(true);
+        return Result.success(buildLoggedInBalance(user, currentBalance, committedSavings));
+    }
+
+    private BalanceVO buildAnonymousBalance() {
+        BalanceVO vo = new BalanceVO();
+        vo.setLoggedIn(false);
+        vo.setInitialBalanceSet(false);
+        vo.setInitialBalance(BigDecimal.ZERO);
+        vo.setCurrentBalance(BigDecimal.ZERO);
+        vo.setCommittedSavings(BigDecimal.ZERO);
+        vo.setSpendableBalance(BigDecimal.ZERO);
+        vo.setOverCommitted(false);
+        return vo;
+    }
+
+    private BalanceVO buildLoggedInBalance(User user, BigDecimal currentBalance, BigDecimal committedSavings) {
+        BigDecimal safeCurrentBalance = currentBalance != null ? currentBalance : BigDecimal.ZERO;
+        BigDecimal safeCommittedSavings = committedSavings != null ? committedSavings : BigDecimal.ZERO;
+        BigDecimal safeInitialBalance = user.getInitialBalance() != null ? user.getInitialBalance() : BigDecimal.ZERO;
+        BigDecimal spendableBalance = safeCurrentBalance.subtract(safeCommittedSavings);
+        boolean initialBalanceSet = Boolean.TRUE.equals(user.getInitialBalanceSet());
 
         BalanceVO vo = new BalanceVO();
-        vo.setInitialBalance(request.getInitialBalance());
-        vo.setCurrentBalance(currentBalance);
-
-        return Result.success(vo);
+        vo.setLoggedIn(true);
+        vo.setInitialBalanceSet(initialBalanceSet);
+        vo.setInitialBalance(safeInitialBalance);
+        vo.setCurrentBalance(safeCurrentBalance);
+        vo.setCommittedSavings(safeCommittedSavings);
+        vo.setSpendableBalance(spendableBalance);
+        vo.setOverCommitted(spendableBalance.compareTo(BigDecimal.ZERO) < 0);
+        return vo;
     }
 }

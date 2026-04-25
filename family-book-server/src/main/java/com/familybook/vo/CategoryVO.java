@@ -12,7 +12,7 @@ public class CategoryVO {
     /**
      * 分类ID
      */
-    private Long id;
+    private String id;
 
     /**
      * 分类名称
@@ -20,7 +20,7 @@ public class CategoryVO {
     private String name;
 
     /**
-     * 分类类型：1-支出，2-收入
+     * 分类类型：1=支出，2=收入
      */
     private Integer type;
 

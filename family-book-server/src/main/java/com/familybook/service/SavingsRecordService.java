@@ -16,7 +16,7 @@ public interface SavingsRecordService extends IService<SavingsRecord> {
     List<SavingsRecord> getRecordsByGoalId(Long goalId);
 
     /**
-     * 获取指定月份的储蓄记录
+     * 获取最近的储蓄记录
      */
-    SavingsRecord getRecordByMonth(Long goalId, String recordMonth);
+    List<SavingsRecord> getRecentRecordsByGoalId(Long goalId, int limit);
 }

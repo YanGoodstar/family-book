@@ -43,22 +43,22 @@ public class CategoryServiceImpl extends ServiceImpl<CategoryMapper, Category> i
     public void initSystemCategories(Long userId) {
         // 预设支出分类
         List<Category> expenseCategories = new ArrayList<>();
-        expenseCategories.add(createSystemCategory("餐饮", 2, "food", 1));
-        expenseCategories.add(createSystemCategory("交通", 2, "transport", 2));
-        expenseCategories.add(createSystemCategory("购物", 2, "shopping", 3));
-        expenseCategories.add(createSystemCategory("娱乐", 2, "entertainment", 4));
-        expenseCategories.add(createSystemCategory("居住", 2, "home", 5));
-        expenseCategories.add(createSystemCategory("医疗", 2, "medical", 6));
-        expenseCategories.add(createSystemCategory("教育", 2, "education", 7));
-        expenseCategories.add(createSystemCategory("其他", 2, "other", 99));
+        expenseCategories.add(createSystemCategory("餐饮", 1, "food", 1));
+        expenseCategories.add(createSystemCategory("交通", 1, "transport", 2));
+        expenseCategories.add(createSystemCategory("购物", 1, "shopping", 3));
+        expenseCategories.add(createSystemCategory("娱乐", 1, "entertainment", 4));
+        expenseCategories.add(createSystemCategory("居住", 1, "home", 5));
+        expenseCategories.add(createSystemCategory("医疗", 1, "medical", 6));
+        expenseCategories.add(createSystemCategory("教育", 1, "education", 7));
+        expenseCategories.add(createSystemCategory("其他", 1, "other", 99));
 
         // 预设收入分类
         List<Category> incomeCategories = new ArrayList<>();
-        incomeCategories.add(createSystemCategory("工资", 1, "salary", 1));
-        incomeCategories.add(createSystemCategory("奖金", 1, "bonus", 2));
-        incomeCategories.add(createSystemCategory("投资", 1, "investment", 3));
-        incomeCategories.add(createSystemCategory("兼职", 1, "parttime", 4));
-        incomeCategories.add(createSystemCategory("其他", 1, "other", 99));
+        incomeCategories.add(createSystemCategory("工资", 2, "salary", 1));
+        incomeCategories.add(createSystemCategory("奖金", 2, "bonus", 2));
+        incomeCategories.add(createSystemCategory("投资", 2, "investment", 3));
+        incomeCategories.add(createSystemCategory("兼职", 2, "parttime", 4));
+        incomeCategories.add(createSystemCategory("其他", 2, "other", 99));
 
         // 保存所有分类
         List<Category> allCategories = new ArrayList<>();

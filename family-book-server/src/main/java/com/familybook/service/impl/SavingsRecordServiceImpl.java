@@ -25,15 +25,18 @@ public class SavingsRecordServiceImpl extends ServiceImpl<SavingsRecordMapper, S
     public List<SavingsRecord> getRecordsByGoalId(Long goalId) {
         LambdaQueryWrapper<SavingsRecord> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SavingsRecord::getGoalId, goalId)
-                .orderByDesc(SavingsRecord::getRecordMonth);
+                .orderByDesc(SavingsRecord::getCreateTime)
+                .orderByDesc(SavingsRecord::getId);
         return this.list(wrapper);
     }
 
     @Override
-    public SavingsRecord getRecordByMonth(Long goalId, String recordMonth) {
+    public List<SavingsRecord> getRecentRecordsByGoalId(Long goalId, int limit) {
         LambdaQueryWrapper<SavingsRecord> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(SavingsRecord::getGoalId, goalId)
-                .eq(SavingsRecord::getRecordMonth, recordMonth);
-        return this.getOne(wrapper);
+                .orderByDesc(SavingsRecord::getCreateTime)
+                .orderByDesc(SavingsRecord::getId)
+                .last("LIMIT " + Math.max(limit, 1));
+        return this.list(wrapper);
     }
 }
