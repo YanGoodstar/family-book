@@ -24,13 +24,13 @@ jobs:
         cd family-book-server
         mvn clean package -DskipTests
 
-    - name: Copy JAR to server
+    - name: Copy JAR and config to server
       uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.SERVER_HOST }}
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
-        source: "family-book-server/target/family-book-server-*.jar"
+        source: "family-book-server/target/family-book-server-*.jar,docker-compose.prod.yml"
         target: "/opt/family-book/"
         overwrite: true
 
@@ -42,14 +42,15 @@ jobs:
         key: ${{ secrets.SERVER_SSH_KEY }}
         script: |
           cd /opt/family-book
-          # 拉取最新代码（docker-compose.yml 等配置）
-          git pull origin main
-          # 确保 target 目录存在且有 JAR 文件
+          # 确保目录结构正确
           mkdir -p family-book-server/target
+          # 移动 JAR 到正确位置（如果SCP放错了位置）
+          ls -la family-book-server/target/ || mv family-book-server-*.jar family-book-server/target/ 2>/dev/null || true
           ls -la family-book-server/target/
-          # 使用预构建的 JAR 镜像重启
-          docker compose -f docker-compose.prod.yml up -d --build
+          # 使用最新的 docker-compose.prod.yml 启动
+          docker compose -f docker-compose.prod.yml down
+          docker compose -f docker-compose.prod.yml up -d
           # 等待启动并检查健康
-          sleep 10
+          sleep 15
           curl -f http://localhost:9000/api/v1/health || exit 1
           echo "Deployment successful!"

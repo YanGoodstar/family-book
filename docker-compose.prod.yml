@@ -16,7 +16,7 @@ services:
       - mysql_data:/var/lib/mysql
       - ./family-book-server/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
     ports:
-      - "127.0.0.1:3306:3306"  # 仅本地访问，更安全
+      - "127.0.0.1:3307:3306"
     command: >
       --default-authentication-plugin=mysql_native_password
       --character-set-server=utf8mb4
@@ -30,12 +30,11 @@ services:
       retries: 10
 
   app:
-    build:
-      context: ./family-book-server
-      dockerfile: Dockerfile.prod
+    image: eclipse-temurin:17-jre-alpine
     container_name: family-book-app
     restart: always
     environment:
+      TZ: Asia/Shanghai
       DB_HOST: mysql
       DB_PORT: 3306
       DB_USERNAME: ${DB_USERNAME}
@@ -46,10 +45,13 @@ services:
       SERVER_PORT: 9000
       SPRING_PROFILES_ACTIVE: prod
       JAVA_OPTS: "-Xms256m -Xmx768m -Djava.security.egd=file:/dev/./urandom"
-      XXL_JOB_ADMIN: ${XXL_JOB_ADMIN:-http://localhost:8080/xxl-job-admin}
-      XXL_JOB_TOKEN: ${XXL_JOB_TOKEN:-}
+    command: >
+      sh -c "apk add --no-cache tzdata &&
+             ln -snf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime &&
+             echo Asia/Shanghai > /etc/timezone &&
+             java $JAVA_OPTS -jar /app/app.jar --spring.profiles.active=$${SPRING_PROFILES_ACTIVE} --server.port=$${SERVER_PORT}"
     ports:
-      - "127.0.0.1:9000:9000"  # 仅本地访问，通过 Nginx 代理
+      - "127.0.0.1:9000:9000"
     depends_on:
       mysql:
         condition: service_healthy
@@ -57,6 +59,7 @@ services:
       - family-book-network
     volumes:
       - ./logs:/var/log/family-book
+      - ./family-book-server/target/family-book-server-1.0.0.jar:/app/app.jar:ro
 
   nginx:
     image: nginx:alpine
