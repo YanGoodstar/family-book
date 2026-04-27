@@ -44,7 +44,7 @@ jobs:
         script: |
           cd /opt/family-book
           # 拉取最新代码（docker-compose.yml 等配置）
-          git pull origin master
+          git pull origin main
           # 使用预构建的 JAR 镜像重启
           docker compose -f docker-compose.prod.yml up -d --build
           # 等待启动并检查健康
