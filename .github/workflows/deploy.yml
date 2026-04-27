@@ -31,8 +31,7 @@ jobs:
         username: ${{ secrets.SERVER_USER }}
         key: ${{ secrets.SERVER_SSH_KEY }}
         source: "family-book-server/target/family-book-server-*.jar"
-        target: "/opt/family-book/family-book-server/target/"
-        strip_components: 2
+        target: "/opt/family-book/"
         overwrite: true
 
     - name: Deploy on server
@@ -45,6 +44,9 @@ jobs:
           cd /opt/family-book
           # 拉取最新代码（docker-compose.yml 等配置）
           git pull origin main
+          # 确保 target 目录存在且有 JAR 文件
+          mkdir -p family-book-server/target
+          ls -la family-book-server/target/
           # 使用预构建的 JAR 镜像重启
           docker compose -f docker-compose.prod.yml up -d --build
           # 等待启动并检查健康

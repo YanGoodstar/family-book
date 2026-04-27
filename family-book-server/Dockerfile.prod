@@ -8,8 +8,8 @@ RUN apk add --no-cache tzdata \
 
 WORKDIR /app
 
-# 复制预构建的 JAR 文件
-COPY target/family-book-server-*.jar app.jar
+# 复制预构建的 JAR 文件（从项目根目录）
+COPY family-book-server/target/family-book-server-*.jar app.jar
 
 ENV SERVER_PORT=9000
 ENV SPRING_PROFILES_ACTIVE=prod
