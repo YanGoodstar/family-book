@@ -1,3 +1,4 @@
+# 生产环境部署配置 - 使用预构建 JAR
 version: '3.8'
 
 services:
@@ -6,16 +7,16 @@ services:
     container_name: family-book-mysql
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-root123456}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       MYSQL_DATABASE: family_book
-      MYSQL_USER: ${DB_USERNAME:-familybook}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-familybook123}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
       TZ: Asia/Shanghai
     volumes:
       - mysql_data:/var/lib/mysql
-      - ./family-book-server/src/main/resources/db/migration:/docker-entrypoint-initdb.d
+      - ./family-book-server/src/main/resources/db/migration:/docker-entrypoint-initdb.d:ro
     ports:
-      - "3307:3306"
+      - "127.0.0.1:3306:3306"  # 仅本地访问，更安全
     command: >
       --default-authentication-plugin=mysql_native_password
       --character-set-server=utf8mb4
@@ -24,31 +25,31 @@ services:
     networks:
       - family-book-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u${DB_USERNAME}", "-p${DB_PASSWORD}"]
       timeout: 20s
       retries: 10
 
   app:
     build:
       context: ./family-book-server
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: family-book-app
     restart: always
     environment:
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USERNAME: ${DB_USERNAME:-familybook}
-      DB_PASSWORD: ${DB_PASSWORD:-familybook123}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-production-please-use-strong-secret}
-      WX_APPID: ${WX_APPID:-}
-      WX_SECRET: ${WX_SECRET:-}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      WX_APPID: ${WX_APPID}
+      WX_SECRET: ${WX_SECRET}
       SERVER_PORT: 9000
       SPRING_PROFILES_ACTIVE: prod
-      JAVA_OPTS: ${JAVA_OPTS:--Xms256m -Xmx768m -Djava.security.egd=file:/dev/./urandom}
+      JAVA_OPTS: "-Xms256m -Xmx768m -Djava.security.egd=file:/dev/./urandom"
       XXL_JOB_ADMIN: ${XXL_JOB_ADMIN:-http://localhost:8080/xxl-job-admin}
       XXL_JOB_TOKEN: ${XXL_JOB_TOKEN:-}
     ports:
-      - "9000:9000"
+      - "127.0.0.1:9000:9000"  # 仅本地访问，通过 Nginx 代理
     depends_on:
       mysql:
         condition: service_healthy

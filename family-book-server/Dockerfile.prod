@@ -1,0 +1,20 @@
+# 生产环境 Dockerfile - 使用预构建 JAR
+FROM eclipse-temurin:17-jre-alpine
+
+ENV TZ=Asia/Shanghai
+RUN apk add --no-cache tzdata \
+  && ln -snf /usr/share/zoneinfo/$TZ /etc/localtime \
+  && echo $TZ > /etc/timezone
+
+WORKDIR /app
+
+# 复制预构建的 JAR 文件
+COPY target/family-book-server-*.jar app.jar
+
+ENV SERVER_PORT=9000
+ENV SPRING_PROFILES_ACTIVE=prod
+ENV JAVA_OPTS="-Xms256m -Xmx768m -Djava.security.egd=file:/dev/./urandom"
+
+EXPOSE 9000
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar --spring.profiles.active=${SPRING_PROFILES_ACTIVE} --server.port=${SERVER_PORT}"]

@@ -1,0 +1,53 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ master, main ]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Build with Maven
+      run: |
+        cd family-book-server
+        mvn clean package -DskipTests
+
+    - name: Copy JAR to server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        source: "family-book-server/target/family-book-server-*.jar"
+        target: "/opt/family-book/family-book-server/target/"
+        strip_components: 2
+        overwrite: true
+
+    - name: Deploy on server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USER }}
+        key: ${{ secrets.SERVER_SSH_KEY }}
+        script: |
+          cd /opt/family-book
+          # 拉取最新代码（docker-compose.yml 等配置）
+          git pull origin master
+          # 使用预构建的 JAR 镜像重启
+          docker compose -f docker-compose.prod.yml up -d --build
+          # 等待启动并检查健康
+          sleep 10
+          curl -f http://localhost:9000/api/v1/health || exit 1
+          echo "Deployment successful!"
